@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a0a">
+<title>Hayatta Kal</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+  html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;touch-action:none;position:fixed}
+  #game{display:block;position:absolute;inset:0}
+  #hud{position:absolute;inset:0;pointer-events:none;z-index:10}
+  #stats{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;width:min(46vw,210px);display:flex;flex-direction:column;gap:5px}
+  .bar{height:15px;background:rgba(0,0,0,.55);border-radius:8px;overflow:hidden;border:1.5px solid rgba(255,255,255,.18);position:relative;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+  .bar>i{display:block;height:100%;width:100%;border-radius:6px;transition:width .12s linear}
+  .bar>span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.95);letter-spacing:.6px}
+  #hpBar>i{background:linear-gradient(180deg,#ff6b6b,#b81c1c)}
+  #hungerBar>i{background:linear-gradient(180deg,#ffb347,#d97b16)}
+  #thirstBar>i{background:linear-gradient(180deg,#5bc0eb,#1a7fb5)}
+  #stamBar>i{background:linear-gradient(180deg,#7ede5a,#3a9c1f)}
+  #inv{position:absolute;top:calc(env(safe-area-inset-top,0px) + 52px);right:10px;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+  .item{background:rgba(0,0,0,.55);border:1.5px solid rgba(255,255,255,.14);border-radius:8px;padding:3px 9px;font-size:11px;color:#fff;display:flex;align-items:center;gap:5px;min-width:70px;justify-content:space-between;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+  .item b{font-weight:800;color:#ffe08a;font-variant-numeric:tabular-nums}
+  #clock{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);border:1.5px solid rgba(255,255,255,.15);border-radius:20px;padding:4px 14px;font-size:11px;color:#fff;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.4);white-space:nowrap}
+  #buttons{position:absolute;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);display:flex;flex-direction:column;gap:12px;align-items:center;pointer-events:auto;z-index:20}
+  .btn{width:76px;height:76px;border-radius:50%;background:radial-gradient(circle at 35% 28%,rgba(255,255,255,.28),rgba(255,255,255,.05));border:2px solid rgba(255,255,255,.32);color:#fff;font-size:11px;font-weight:900;letter-spacing:.4px;display:flex;align-items:center;justify-content:center;text-align:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:0 4px 14px rgba(0,0,0,.5),inset 0 0 12px rgba(255,255,255,.07);transition:transform .07s,filter .1s;line-height:1.15;padding:4px}
+  .btn:active,.btn.on{transform:scale(.9);filter:brightness(1.5)}
+  .btn.atk{background:radial-gradient(circle at 35% 28%,rgba(255,120,90,.55),rgba(190,35,20,.3));border-color:rgba(255,160,120,.5)}
+  .btn.gather{background:radial-gradient(circle at 35% 28%,rgba(120,220,120,.45),rgba(25,115,25,.28));border-color:rgba(150,255,150,.45)}
+  .btn.eat{width:60px;height:60px;font-size:10px;background:radial-gradient(circle at 35% 28%,rgba(255,205,90,.45),rgba(175,115,10,.28));border-color:rgba(255,220,140,.45)}
+  #topRight{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);right:10px;display:flex;gap:8px;pointer-events:auto;z-index:20}
+  .iconBtn{width:38px;height:38px;border-radius:11px;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,255,255,.2);color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .iconBtn:active{background:rgba(255,255,255,.22)}
+  .overlay{position:absolute;inset:0;background:rgba(8,10,8,.95);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .overlay.hidden{display:none}
+  .overlay h1{font-size:36px;font-weight:900;letter-spacing:3px;margin-bottom:8px;color:#c8e6a0;text-shadow:0 3px 14px rgba(120,200,80,.35)}
+  .overlay h2{font-size:22px;font-weight:800;margin-bottom:14px;color:#ffd97a;letter-spacing:1px}
+  .overlay p{font-size:13px;color:#9aa89a;margin-bottom:18px;line-height:1.75;max-width:340px}
+  .bigBtn{background:linear-gradient(180deg,#5aa832,#3d7a1e);color:#fff;border:none;padding:15px 46px;border-radius:14px;font-size:16px;font-weight:800;letter-spacing:1px;box-shadow:0 6px 18px rgba(60,140,30,.4),inset 0 1px 0 rgba(255,255,255,.25);margin:7px;min-width:210px}
+  .bigBtn:active{transform:scale(.96)}
+  .bigBtn.sec{background:linear-gradient(180deg,#3a3f3a,#232723);box-shadow:0 6px 18px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.12)}
+  .settingRow{display:flex;align-items:center;justify-content:space-between;width:min(330px,90vw);padding:11px 15px;margin:5px 0;background:rgba(255,255,255,.06);border-radius:12px;border:1px solid rgba(255,255,255,.09)}
+  .settingRow label{font-size:13px;font-weight:600;color:#dfe6df}
+  .seg{display:flex;gap:5px}
+  .seg button{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.14);color:#aab5aa;padding:7px 11px;border-radius:9px;font-size:11px;font-weight:700}
+  .seg button.active{background:linear-gradient(180deg,#5aa832,#3d7a1e);color:#fff;border-color:#7bc94a}
+  #hurtFlash{position:absolute;inset:0;background:radial-gradient(circle,transparent 35%,rgba(200,0,0,.6) 100%);opacity:0;pointer-events:none;z-index:15;transition:opacity .3s}
+  #msg{position:absolute;bottom:36%;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;padding:9px 20px;border-radius:22px;font-size:13px;font-weight:700;opacity:0;transition:opacity .35s;pointer-events:none;z-index:16;white-space:nowrap;border:1px solid rgba(255,255,255,.15)}
+  #msg.show{opacity:1}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud">
+  <div id="stats">
+    <div class="bar" id="hpBar"><i></i><span>CAN</span></div>
+    <div class="bar" id="hungerBar"><i></i><span>AÇLIK</span></div>
+    <div class="bar" id="thirstBar"><i></i><span>SUSUZLUK</span></div>
+    <div class="bar" id="stamBar"><i></i><span>GÜÇ</span></div>
+  </div>
+  <div id="clock">☀️ Gündüz</div>
+  <div id="inv">
+    <div class="item">🪵 Odun <b id="cWood">0</b></div>
+    <div class="item">🪨 Taş <b id="cStone">0</b></div>
+    <div class="item">🫐 Meyve <b id="cBerry">0</b></div>
+    <div class="item">🍖 Et <b id="cMeat">0</b></div>
+  </div>
+  <div id="buttons">
+    <div class="btn atk" id="btnAtk">SALDIR</div>
+    <div class="btn gather" id="btnGather">TOPLA</div>
+    <div class="btn eat" id="btnEat">YE</div>
+  </div>
+</div>
+<div id="topRight">
+  <div class="iconBtn" id="pauseBtn">⏸</div>
+</div>
+
+<div id="hurtFlash"></div>
+<div id="msg"></div>
+
+<div id="menu" class="overlay">
+  <h1>HAYATTA KAL</h1>
+  <p>Vahşi doğada tek başınasın. Yiyecek ve su bul, kaynak topla. Gece olduğunda kurtlar avlanmaya başlar — ateşin yok, dikkatli ol.</p>
+  <button class="bigBtn" id="startBtn">BAŞLA</button>
+  <button class="bigBtn sec" id="settingsBtn">AYARLAR</button>
+</div>
+
+<div id="settingsPanel" class="overlay hidden">
+  <h2>AYARLAR</h2>
+  <div class="settingRow">
+    <label>Grafik Kalitesi</label>
+    <div class="seg" id="qualitySeg">
+      <button data-q="dusuk">Düşük</button>
+      <button data-q="orta">Orta</button>
+      <button data-q="yuksek">Yüksek</button>
+    </div>
+  </div>
+  <div class="settingRow">
+    <label>Parçacıklar</label>
+    <div class="seg" id="partSeg">
+      <button data-p="0">Kapalı</button>
+      <button data-p="1">Açık</button>
+    </div>
+  </div>
+  <div class="settingRow">
+    <label>Gün Döngüsü</label>
+    <div class="seg" id="daySeg">
+      <button data-d="120">Kısa</button>
+      <button data-d="180">Normal</button>
+      <button data-d="300">Uzun</button>
+    </div>
+  </div>
+  <button class="bigBtn" id="closeSettings" style="margin-top:18px">TAMAM</button>
+</div>
+
+<div id="pausePanel" class="overlay hidden">
+  <h2>DURAKLATILDI</h2>
+  <button class="bigBtn" id="resumeBtn">DEVAM ET</button>
+  <button class="bigBtn sec" id="pauseSettings">AYARLAR</button>
+  <button class="bigBtn sec" id="quitBtn">ANA MENÜ</button>
+</div>
+
+<div id="gameOver" class="overlay hidden">
+  <h1 style="color:#ff7a7a">ÖLDÜN</h1>
+  <p id="goStats"></p>
+  <button class="bigBtn" id="retryBtn">TEKRAR DENE</button>
+  <button class="bigBtn sec" id="menuBtn">ANA MENÜ</button>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ===================== TEMEL ===================== */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d', { alpha: false });
+let W = 0, H = 0, DPR = 1;
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth;
+  H = window.innerHeight;
+  canvas.width = Math.floor(W * DPR);
+  canvas.height = Math.floor(H * DPR);
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+resize();
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => setTimeout(resize, 250));
+
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('dblclick', e => e.preventDefault(), { passive:false });
+document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive:false });
+
+const clamp = (v,a,b) => v < a ? a : (v > b ? b : v);
+const rnd = (a,b) => a + Math.random() * (b - a);
+const rndInt = (a,b) => Math.floor(rnd(a, b + 1));
+const dist2 = (ax,ay,bx,by) => { const dx = ax-bx, dy = ay-by; return dx*dx + dy*dy; };
+const lerp = (a,b,t) => a + (b-a) * t;
+
+/* ===================== AYARLAR ===================== */
+const settings = {
+  quality: 'orta',
+  particles: true,
+  dayLength: 180
+};
+
+const QUALITY = {
+  dusuk:  { lightR: 130, groundDetail: 220, grassTufts: 60, shadow: false, maxWolves: 4 },
+  orta:   { lightR: 175, groundDetail: 420, grassTufts: 130, shadow: true,  maxWolves: 6 },
+  yuksek: { lightR: 215, groundDetail: 700, grassTufts: 240, shadow: true,  maxWolves: 8 }
+};
+const Q = () => QUALITY[settings.quality];
+
+/* ===================== DÜNYA ===================== */
+const WORLD = 3000;
+let trees = [], rocks = [], bushes = [], ponds = [], wolves = [], particles = [];
+
+let groundPattern = null;
+let groundCanvas = null;
+
+function buildGround(){
+  const S = 512;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const g = c.getContext('2d');
+  g.fillStyle = '#3d5c2b';
+  g.fillRect(0, 0, S, S);
+
+  // ana doku
+  const det = Q().groundDetail;
+  for (let i = 0; i < det; i++){
+    const x = Math.random() * S, y = Math.random() * S;
+    const r = Math.random();
+    if (r < 0.4) g.fillStyle = '#35521f';
+    else if (r < 0.75) g.fillStyle = '#476b32';
+    else g.fillStyle = '#2c451a';
+    g.globalAlpha = 0.55;
+    g.fillRect(x, y, rnd(2,5), rnd(2,5));
+  }
+  g.globalAlpha = 1;
+
+  // toprak lekeleri
+  for (let i = 0; i < det / 14; i++){
+    const x = Math.random() * S, y = Math.random() * S;
+    const rr = rnd(14, 40);
+    const grad = g.createRadialGradient(x, y, 0, x, y, rr);
+    grad.addColorStop(0, 'rgba(90,70,40,0.22)');
+    grad.addColorStop(1, 'rgba(90,70,40,0)');
+    g.fillStyle = grad;
+    g.beginPath(); g.arc(x, y, rr, 0, 6.283); g.fill();
+  }
+
+  // çim tutamları
+  const tufts = Q().grassTufts;
+  for (let i = 0; i < tufts; i++){
+    const x = Math.random() * S, y = Math.random() * S;
+    g.strokeStyle = Math.random() < 0.5 ? 'rgba(120,175,80,0.5)' : 'rgba(80,130,50,0.5)';
+    g.lineWidth = 1.2;
+    g.beginPath();
+    g.moveTo(x, y);
+    g.lineTo(x + rnd(-3,3), y - rnd(4,9));
+    g.stroke();
+  }
+
+  groundCanvas = c;
+  groundPattern = ctx.createPattern(c, 'repeat');
+}
+
+function generateWorld(){
+  trees = []; rocks = []; bushes = []; ponds = []; wolves = []; particles = [];
+
+  // Göletler
+  for (let i = 0; i < 5; i++){
+    ponds.push({
+      x: rnd(400, WORLD - 400),
+      y: rnd(400, WORLD - 400),
+      rx: rnd(85, 150),
+      ry: rnd(65, 115),
+      ph: Math.random() * 10
+    });
+  }
+
+  const clearOfPonds = (x, y, pad) => {
+    for (const p of ponds){
+      if (dist2(x, y, p.x, p.y) < (p.rx + pad) * (p.rx + pad)) return false;
+    }
+    return true;
+  };
+
+  // Ağaçlar
+  for (let i = 0; i < 95; i++){
+    let x, y, ok = false;
+    for (let t = 0; t < 25; t++){
+      x = rnd(120, WORLD - 120); y = rnd(120, WORLD - 120);
+      if (clearOfPonds(x, y, 40) && dist2(x, y, WORLD/2, WORLD/2) > 220*220) { ok = true; break; }
+    }
+    if (!ok) continue;
+    trees.push({
+      x, y, r: 22, hp: 3, maxHp: 3,
+      size: rnd(0.85, 1.35),
+      sway: Math.random() * 6.28,
+      alive: true, respawn: 0
+    });
+  }
+
+  // Kayalar
+  for (let i = 0; i < 55; i++){
+    let x, y, ok = false;
+    for (let t = 0; t < 25; t++){
+      x = rnd(120, WORLD - 120); y = rnd(120, WORLD - 120);
+      if (clearOfPonds(x, y, 30) && dist2(x, y, WORLD/2, WORLD/2) > 200*200) { ok = true; break; }
+    }
+    if (!ok) continue;
+    rocks.push({
+      x, y, r: 20, hp: 3, maxHp: 3,
+      size: rnd(0.8, 1.3),
+      rot: Math.random() * 6.28,
+      alive: true, respawn: 0
+    });
+  }
+
+  // Çalılar
+  for (let i = 0; i < 45; i++){
+    let x, y;
+    let ok = false;
+    for (let t = 0; t < 25; t++){
+      x = rnd(120, WORLD - 120); y = rnd(120, WORLD - 120);
+      if (clearOfPonds(x, y, 25)) { ok = true; break; }
+    }
+    if (!ok) continue;
+    bushes.push({
+      x, y, r: 17, berries: 2, maxBerries: 2,
+      respawn: 0
+    });
+  }
+}
+
+/* ===================== OYUNCU ===================== */
+const player = {
+  x: WORLD/2, y: WORLD/2, r: 15,
+  hp: 100, maxHp: 100,
+  hunger: 100, thirst: 100, stam: 100,
+  dir: -Math.PI/2,
+  moving: false,
+  speed: 168, sprintMul: 1.75,
+  attackCd: 0, attackAnim: 0,
+  gatherCd: 0, gatherAnim: 0,
+  damage: 24,
+  hasSpear: false,
+  flash: 0,
+  step: 0
+};
+
+const inv = { wood: 0, stone: 0, berry: 0, meat: 0 };
+
+/* ===================== DURUM ===================== */
+let gameState = 'menu'; // menu | playing | paused | over
+let gameTime = 0;
+let darkness = 0;
+let wolfSpawnTimer = 0;
+let cam = { x: 0, y: 0 };
+let shake = 0;
+let lastTime = 0;
+let elapsed = 0;
+let playerAttackSwing = 0;
+let msgTimer = 0;
+let gameOverStats = null;
+
+/* ===================== GİRDİ ===================== */
+const joy = { active: false, id: null, ox: 0, oy: 0, x: 0, y: 0, dirX: 0, dirY: 0, mag: 0 };
+const MAXJOY = 62;
+const holding = { gather: false, attack: false };
+
+canvas.addEventListener('pointerdown', e => {
+  if (gameState !== 'playing') return;
+  if (e.clientX > W * 0.55) return;
+  if (joy.active) return;
+  joy.active = true;
+  joy.id = e.pointerId;
+  joy.ox = e.clientX; joy.oy = e.clientY;
+  joy.x = e.clientX;  joy.y = e.clientY;
+  joy.dirX = 0; joy.dirY = 0; joy.mag = 0;
+  try { canvas.setPointerCapture(e.pointerId); } catch(_){}
+});
+
+canvas.addEventListener('pointermove', e => {
+  if (!joy.active || e.pointerId !== joy.id) return;
+  const dx = e.clientX - joy.ox;
+  const dy = e.clientY - joy.oy;
+  const d = Math.hypot(dx, dy);
+  const cl = Math.min(d, MAXJOY);
+  joy.x = joy.ox + (d > 0 ? dx/d*cl : 0);
+  joy.y = joy.oy + (d > 0 ? dy/d*cl : 0);
+  joy.mag = cl / MAXJOY;
+  if (d > 0.001){ joy.dirX = dx/d; joy.dirY = dy/d; }
+});
+
+function endJoy(e){
+  if (!joy.active) return;
+  if (e && e.pointerId !== undefined && e.pointerId !== joy.id) return;
+  joy.active = false; joy.id = null;
+  joy.dirX = 0; joy.dirY = 0; joy.mag = 0;
+}
+canvas.addEventListener('pointerup', endJoy);
+canvas.addEventListener('pointercancel', endJoy);
+canvas.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') endJoy(e); });
+
+function bindHold(el, key, onDown){
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation();
+    if (gameState !== 'playing') return;
+    holding[key] = true;
+    el.classList.add('on');
+    if (onDown) onDown();
+  });
+  const up = e => { holding[key] = false; el.classList.remove('on'); };
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', up);
+  el.addEventListener('pointerleave', up);
+}
+
+const btnGather = document.getElementById('btnGather');
+const btnAtk = document.getElementById('btnAtk');
+const btnEat = document.getElementById('btnEat');
+
+bindHold(btnGather, 'gather');
+bindHold(btnAtk, 'attack', () => { if (player.attackCd <= 0) doAttack(); });
+bindHold(btnEat, 'eat', () => doEat());
+btnEat.addEventListener('pointerdown', e => { e.stopPropagation(); });
+
+/* ===================== YARDIMCI ===================== */
+function showMsg(text, dur){
+  const el = document.getElementById('msg');
+  el.textContent = text;
+  el.classList.add('show');
+  msgTimer = dur || 1.6;
+}
+
+function flashHurt(){
+  const el = document.getElementById('hurtFlash');
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 90);
+}
+
+function spawnParticles(x, y, color, count, spread, life){
+  if (!settings.particles) return;
+  const n = Math.min(count, settings.quality === 'dusuk' ? 4 : 12);
+  for (let i = 0; i < n; i++){
+    const a = Math.random() * 6.283;
+    const s = rnd(20, spread);
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * s,
+      vy: Math.sin(a) * s - 20,
+      life: life || rnd(0.4, 0.85),
+      maxLife: life || 0.85,
+      color,
+      size: rnd(2, 4.5)
+    });
+  }
+}
+
+/* ===================== EYLEMLER ===================== */
+function nearestPond(){
+  let best = null, bd = Infinity;
+  for (const p of ponds){
+    const d = Math.sqrt(dist2(player.x, player.y, p.x, p.y));
+    if (d < Math.max(p.rx, p.ry) + 42 && d < bd){ bd = d; best = p; }
+  }
+  return best;
+}
+
+function nearestResource(){
+  let best = null, bd = Infinity, type = null;
+
+  for (const t of trees){
+    if (!t.alive) continue;
+    const d = dist2(player.x, player.y, t.x, t.y);
+    if (d < (player.r + t.r + 26) ** 2 && d < bd){ bd = d; best = t; type = 'tree'; }
+  }
+  for (const r of rocks){
+    if (!r.alive) continue;
+    const d = dist2(player.x, player.y, r.x, r.y);
+    if (d < (player.r + r.r + 26) ** 2 && d < bd){ bd = d; best = r; type = 'rock'; }
+  }
+  for (const b of bushes){
+    if (b.berries <= 0) continue;
+    const d = dist2(player.x, player.y, b.x, b.y);
+    if (d < (player.r + b.r + 26) ** 2 && d < bd){ bd = d; best = b; type = 'bush'; }
+  }
+  return best ? { obj: best, type } : null;
+}
+
+function doGather(dt){
+  // Önce su kontrolü
+  const pond = nearestPond();
+  if (pond){
+    if (player.thirst < 100){
+      player.thirst = Math.min(100, player.thirst + 34 * dt * 2.2);
+      btnGather.textContent = 'İÇİYOR';
+      if (Math.random() < dt * 8){
+        spawnParticles(player.x + rnd(-10,10), player.y + rnd(-6,6), '#7fd4ff', 2, 40, 0.5);
+      }
+      player.gatherAnim = 1;
+    } else {
+      btnGather.textContent = 'TOK';
+    }
+    return true;
+  }
+
+  const found = nearestResource();
+  if (!found) return false;
+
+  const { obj, type } = found;
+  player.dir = Math.atan2(obj.y - player.y, obj.x - player.x);
+  player.gatherAnim = 1;
+
+  if (type === 'tree'){
+    obj.hp -= dt * 2.4;
+    if (Math.random() < dt * 12){
+      spawnParticles(obj.x + rnd(-10,10), obj.y - 10, '#8b5a2b', 2, 45, 0.6);
+    }
+    if (obj.hp <= 0){
+      obj.alive = false;
+      obj.respawn = 26;
+      inv.wood += 2;
+      spawnParticles(obj.x, obj.y, '#8b5a2b', 8, 90, 0.8);
+      showMsg('+2 🪵 Odun');
+    }
+    return true;
+  }
+  if (type === 'rock'){
+    obj.hp -= dt * 2.4;
+    if (Math.random() < dt * 12){
+      spawnParticles(obj.x + rnd(-8,8), obj.y + rnd(-6,6), '#9aa0a6', 2, 45, 0.6);
+    }
+    if (obj.hp <= 0){
+      obj.alive = false;
+      obj.respawn = 30;
+      inv.stone += 2;
+      spawnParticles(obj.x, obj.y, '#9aa0a6', 8, 90, 0.8);
+      showMsg('+2 🪨 Taş');
+    }
+    return true;
+  }
+  if (type === 'bush'){
+    obj.berries--;
+    inv.berry += 1;
+    obj.respawn = 22;
+    spawnParticles(obj.x, obj.y, '#e0457b', 5, 70, 0.7);
+    showMsg('+1 🫐 Meyve');
+    return true;
+  }
+  return false;
+}
+
+function doAttack(){
+  if (player.attackCd > 0) return;
+  player.attackCd = 0.42;
+  player.attackAnim = 1;
+  playerAttackSwing = 1;
+
+  const reach = player.hasSpear ? 62 : 46;
+  let hitAny = false;
+
+  for (const w of wolves){
+    const d = Math.sqrt(dist2(player.x, player.y, w.x, w.y));
+    if (d < reach + w.r){
+      w.hp -= player.damage;
+      w.flash = 0.25;
+      w.knockX = (w.x - player.x) / Math.max(d, 1) * 180;
+      w.knockY = (w.y - player.y) / Math.max(d, 1) * 180;
+      hitAny = true;
+      spawnParticles(w.x, w.y, '#c0392b', 6, 80, 0.5);
+      if (w.hp <= 0){
+        spawnParticles(w.x, w.y, '#7a1f1f', 14, 120, 0.9);
+        inv.meat += rndInt(1, 2);
+        showMsg('Kurt öldü! +🍖 Et');
+      }
+    }
+  }
+
+  // kaynaklara da hafif vurur
+  if (!hitAny){
+    for (const t of trees){
+      if (!t.alive) continue;
+      const d = Math.sqrt(dist2(player.x, player.y, t.x, t.y));
+      if (d < reach + t.r){
+        t.hp -= 1.2;
+        spawnParticles(t.x, t.y - 10, '#8b5a2b', 4, 60, 0.5);
+        if (t.hp <= 0){ t.alive = false; t.respawn = 26; inv.wood += 2; showMsg('+2 🪵 Odun'); }
+        hitAny = true;
+        break;
+      }
+    }
+  }
+
+  if (hitAny) shake = Math.max(shake, 4);
+}
+
+function doEat(){
+  if (inv.meat > 0){
+    inv.meat--;
+    player.hunger = Math.min(100, player.hunger + 42);
+    player.hp = Math.min(player.maxHp, player.hp + 6);
+    showMsg('🍖 Et yedin');
+    spawnParticles(player.x, player.y, '#ff9f43', 5, 50, 0.6);
+  } else if (inv.berry > 0){
+    inv.berry--;
+    player.hunger = Math.min(100, player.hunger + 17);
+    showMsg('🫐 Meyve yedin');
+    spawnParticles(player.x, player.y, '#e0457b', 5, 50, 0.6);
+  } else {
+    showMsg('Yiyeceğin yok!');
+  }
+}
+
+/* ===================== GÜNCELLEME ===================== */
+function updateTimeOfDay(dt){
+  gameTime += dt;
+  const t = (gameTime % settings.dayLength) / settings.dayLength;
+
+  // 0.00-0.42 gündüz, 0.50-0.88 gece, geçişler yumuşak
+  let d = 0;
+  if (t < 0.42) d = 0;
+  else if (t < 0.52) d = (t - 0.42) / 0.10 * 0.88;
+  else if (t < 0.86) d = 0.88;
+  else if (t < 0.96) d = (1 - (t - 0.86) / 0.10) * 0.88;
+  else d = 0;
+
+  darkness = d;
+
+  const clock = document.getElementById('clock');
+  if (d < 0.15) clock.textContent = '☀️ Gündüz';
+  else if (d < 0.55) clock.textContent = '🌅 Alacakaranlık';
+  else clock.textContent = '🌙 Gece';
+}
+
+function updatePlayer(dt){
+  player.moving = false;
+  let mvx = 0, mvy = 0;
+
+  if (joy.active && joy.mag > 0.12){
+    mvx = joy.dirX;
+    mvy = joy.dirY;
+    player.dir = Math.atan2(mvy, mvx);
+    player.moving = true;
+  }
+
+  const wantSprint = joy.mag > 0.82 && player.stam > 5 && player.moving;
+  let spd = player.speed;
+
+  if (wantSprint){
+    spd *= player.sprintMul;
+    player.stam = Math.max(0, player.stam - 26 * dt);
+  } else {
+    player.stam = Math.min(100, player.stam + (player.moving ? 9 : 18) * dt);
+  }
+
+  // hareket
+  if (player.moving){
+    const nx = player.x + mvx * spd * dt;
+    const ny = player.y + mvy * spd * dt;
+    player.x = nx;
+    player.y = ny;
+    player.step += dt * (wantSprint ? 14 : 9);
+  }
+
+  // dünya sınırları
+  player.x = clamp(player.x, 40, WORLD - 40);
+  player.y = clamp(player.y, 40, WORLD - 40);
+
+  // çarpışma (ağaç/kaya)
+  const colliders = [];
+  for (const t of trees) if (t.alive) colliders.push({ x: t.x, y: t.y, r: t.r * 0.72 });
+  for (const r of rocks) if (r.alive) colliders.push({ x: r.x, y: r.y, r: r.r * 0.8 });
+
+  for (const c of colliders){
+    const dx = player.x - c.x;
+    const dy = player.y - c.y;
+    const minD = player.r + c.r;
+    const d2 = dx*dx + dy*dy;
+    if (d2 < minD*minD && d2 > 0.001){
+      const d = Math.sqrt(d2);
+      const push = (minD - d);
+      player.x += (dx / d) * push;
+      player.y += (dy / d) * push;
+    }
+  }
+
+  // istatistikler
+  player.hunger = Math.max(0, player.hunger - 0.34 * dt);
+  player.thirst = Math.max(0, player.thirst - 0.52 * dt);
+
+  if (player.hunger <= 0 || player.thirst <= 0){
+    player.hp -= (2.6 + (player.thirst <= 0 ? 1.4 : 0)) * dt;
+  } else if (player.hunger > 55 && player.thirst > 55 && player.hp < player.maxHp){
+    player.hp = Math.min(player.maxHp, player.hp + 0.9 * dt);
+  }
+
+  if (player.attackCd > 0) player.attackCd -= dt;
+  if (player.attackAnim > 0) player.attackAnim = Math.max(0, player.attackAnim - dt * 3.6);
+  if (player.gatherAnim > 0) player.gatherAnim = Math.max(0, player.gatherAnim - dt * 3.2);
+  if (player.flash > 0) player.flash -= dt;
+  if (playerAttackSwing > 0) playerAttackSwing = Math.max(0, playerAttackSwing - dt * 3.2);
+
+  // toplama
+  if (holding.gather && gameState === 'playing'){
+    player.gatherCd -= dt;
+    const ok = doGather(dt);
+    if (!ok) btnGather.textContent = 'TOPLA';
+    else if (!nearestPond()) btnGather.textContent = 'TOPLUYOR';
+  } else {
+    btnGather.textContent = 'TOPLA';
+  }
+
+  // saldırı (basılı tutunca tekrar)
+  if (holding.attack && player.attackCd <= 0) doAttack();
+
+  if (player.hp <= 0){
+    player.hp = 0;
+    endGame();
+  }
+}
+
+function updateWolves(dt){
+  const isNight = darkness > 0.4;
+
+  // gece doğuş
+  if (isNight){
+    wolfSpawnTimer -= dt;
+    const maxW = Q().maxWolves;
+    if (wolves.length < maxW && wolfSpawnTimer <= 0){
+      wolfSpawnTimer = rnd(2.5, 5.5);
+      const ang = Math.random() * 6.283;
+      const d = Math.max(W, H) * 0.7 + 160;
+      let x = clamp(player.x + Math.cos(ang) * d, 70, WORLD - 70);
+      let y = clamp(player.y + Math.sin(ang) * d, 70, WORLD - 70);
+      wolves.push({
+        x, y, r: 16,
+        hp: 46, maxHp: 46,
+        speed: 96,
+        atkCd: 0,
+        flash: 0,
+        dir: 0,
+        knockX: 0, knockY: 0,
+        wob: Math.random() * 10,
+        burn: 0
+      });
+    }
+  } else {
+    // gündüz yanarlar / kaçarlar
+    for (let i = wolves.length - 1; i >= 0; i--){
+      const w = wolves[i];
+      w.burn += dt;
+      w.hp -= 9 * dt;
+      if (settings.particles && Math.random() < dt * 6){
+        spawnParticles(w.x, w.y - 6, '#ff9d3c', 1, 30, 0.5);
+      }
+      if (w.hp <= 0) wolves.splice(i, 1);
+    }
+  }
+
+  for (let i = wolves.length - 1; i >= 0; i--){
+    const w = wolves[i];
+    const d = Math.sqrt(dist2(w.x, w.y, player.x, player.y));
+
+    // nakavt hareketi
+    if (Math.abs(w.knockX) > 1 || Math.abs(w.knockY) > 1){
+      w.x += w.knockX * dt;
+      w.y += w.knockY * dt;
+      w.knockX *= (1 - dt * 7);
+      w.knockY *= (1 - dt * 7);
+    }
+
+    // takip
+    const chaseRange = 520;
+    if (d < chaseRange && d > 1){
+      const sp = w.speed * (darkness > 0.5 ? 1 : 0.7);
+      const nx = (player.x - w.x) / d;
+      const ny = (player.y - w.y) / d;
+      w.dir = Math.atan2(ny, nx);
+      w.wob += dt * 12;
+
+      if (d > player.r + w.r + 2){
+        w.x += nx * sp * dt;
+        w.y += ny * sp * dt;
+      }
+
+      // saldırı
+      w.atkCd -= dt;
+      if (d < player.r + w.r + 10 && w.atkCd <= 0){
+        w.atkCd = 1.05;
+        player.hp -= 9;
+        player.flash = 0.3;
+        shake = Math.max(shake, 8);
+        flashHurt();
+        spawnParticles(player.x, player.y, '#c0392b', 6, 70, 0.5);
+      }
+    } else {
+      // gezinme
+      w.wob += dt * 2;
+      w.dir += Math.sin(w.wob) * dt * 1.4;
+      w.x += Math.cos(w.dir) * w.speed * 0.32 * dt;
+      w.y += Math.sin(w.dir) * w.speed * 0.32 * dt;
+    }
+
+    w.x = clamp(w.x, 40, WORLD - 40);
+    w.y = clamp(w.y, 40, WORLD - 40);
+    if (w.flash > 0) w.flash -= dt;
+
+    // çok uzaktakileri sil
+    if (d > 1600) wolves.splice(i, 1);
+  }
+}
+
+function updateResources(dt){
+  for (const t of trees){
+    if (!t.alive){
+      t.respawn -= dt;
+      if (t.respawn <= 0){
+        // yeni konum
+        for (let k = 0; k < 20; k++){
+          const nx = rnd(120, WORLD - 120);
+          const ny = rnd(120, WORLD - 120);
+          if (dist2(nx, ny, player.x, player.y) > 300*300){
+            t.x = nx; t.y = ny; break;
+          }
+        }
+        t.hp = t.maxHp;
+        t.alive = true;
+      }
+    }
+  }
+  for (const r of rocks){
+    if (!r.alive){
+      r.respawn -= dt;
+      if (r.respawn <= 0){
+        for (let k = 0; k < 20; k++){
+          const nx = rnd(120, WORLD - 120);
+          const ny = rnd(120, WORLD - 120);
+          if (dist2(nx, ny, player.x, player.y) > 300*300){
+            r.x = nx; r.y = ny; break;
+          }
+        }
+        r.hp = r.maxHp;
+        r.alive = true;
+      }
+    }
+  }
+  for (const b of bushes){
+    if (b.berries < b.maxBerries){
+      b.respawn -= dt;
+      if (b.respawn <= 0){
+        b.berries = b.maxBerries;
+      }
+    }
+  }
+}
+
+function updateParticles(dt){
+  for (let i = particles.length - 1; i >= 0; i--){
+    const p = particles[i];
+    p.life -= dt;
+    if (p.life <= 0){ particles.splice(i, 1); continue; }
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 180 * dt;
+    p.vx *= (1 - dt * 2.2);
+  }
+}
+
+function updateCamera(dt){
+  const targetX = clamp(player.x - W/2, 0, Math.max(0, WORLD - W));
+  const targetY = clamp(player.y - H/2, 0, Math.max(0, WORLD - H));
+  cam.x = lerp(cam.x, targetX, Math.min(1, dt * 7));
+  cam.y = lerp(cam.y, targetY, Math.min(1, dt * 7));
+}
+
+/* ===================== ÇİZİM ===================== */
+function drawTree(t, time){
+  const s = t.size;
+  const sway = Math.sin(time * 1.1 + t.sway) * 2.5 * s;
+  const x = t.x, y = t.y;
+
+  if (Q().shadow){
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(x + 4, y + 6, 20 * s, 9 * s, 0, 0, 6.283);
+    ctx.fill();
+  }
+
+  // gövde
+  ctx.fillStyle = '#5b3d22';
+  ctx.beginPath();
+  ctx.moveTo(x - 5*s, y + 8*s);
+  ctx.lineTo(x - 3*s + sway*0.3, y - 18*s);
+  ctx.lineTo(x + 3*s + sway*0.3, y - 18*s);
+  ctx.lineTo(x + 5*s, y + 8*s);
+  ctx.closePath();
+  ctx.fill();
+
+  // yapraklar (3 katman)
+  const layers = [
+    { dx: 0,   dy: -22, r: 21, c: '#2f6b23' },
+    { dx: -9,  dy: -16, r: 16, c: '#357a28' },
+    { dx: 9,   dy: -16, r: 16, c: '#357a28' },
+    { dx: 0,   dy: -34, r: 15, c: '#3f8c2e' }
+  ];
+  for (const L of layers){
+    ctx.fillStyle = L.c;
+    ctx.beginPath();
+    ctx.arc(x + L.dx*s + sway, y + L.dy*s, L.r*s, 0, 6.283);
+    ctx.fill();
+  }
+  // ışık vurgusu
+  ctx.fillStyle = 'rgba(140,200,90,0.28)';
+  ctx.beginPath();
+  ctx.arc(x - 6*s + sway, y - 30*s, 8*s, 0, 6.283);
+  ctx.fill();
+}
+
+function drawRock(r){
+  const s = r.size;
+  const x = r.x, y = r.y;
+
+  if (Q().shadow){
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(x + 3, y + 7, 19*s, 8*s, 0, 0, 6.283);
+    ctx.fill();
+  }
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(r.rot);
+
+  ctx.fillStyle = '#6e7379';
+  ctx.beginPath();
+  ctx.moveTo(-17*s, 6*s);
+  ctx.lineTo(-12*s, -13*s);
+  ctx.lineTo(3*s, -18*s);
+  ctx.lineTo(16*s, -6*s);
+  ctx.lineTo(13*s, 8*s);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#8a9098';
+  ctx.beginPath();
+  ctx.moveTo(-12*s, -13*s);
+  ctx.lineTo(3*s, -18*s);
+  ctx.lineTo(6*s, -6*s);
+  ctx.lineTo(-6*s, -2*s);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#565b61';
+  ctx.beginPath();
+  ctx.moveTo(13*s, 8*s);
+  ctx.lineTo(16*s, -6*s);
+  ctx.lineTo(6*s, -2*s);
+  ctx.lineTo(2*s, 8*s);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawBush(b, time){
+  const x = b.x, y = b.y;
+  const s = 1;
+
+  if (Q().shadow){
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath();
+    ctx.ellipse(x + 2, y + 5, 16, 7, 0, 0, 6.283);
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#2e5c22';
+  ctx.beginPath();
+  ctx.arc(x - 8, y - 3, 11, 0, 6.283);
+  ctx.arc(x + 8, y - 3, 11, 0, 6.283);
+  ctx.arc(x, y - 10, 12, 0, 6.283);
+  ctx.arc(x, y + 2, 11, 0, 6.283);
+  ctx.fill();
+
+  ctx.fillStyle = '#3b7a2c';
+  ctx.beginPath();
+  ctx.arc(x - 5, y - 8, 8, 0, 6.283);
+  ctx.arc(x + 6, y - 4, 7, 0, 6.283);
+  ctx.fill();
+
+  // meyveler
+  if (b.berries > 0){
+    const spots = [[-9,-6],[4,-12],[9,-2],[-3,2]];
+    for (let i = 0; i < b.berries; i++){
+      const sp = spots[i % spots.length];
+      ctx.fillStyle = '#e0457b';
+      ctx.beginPath();
+      ctx.arc(x + sp[0], y + sp[1], 3.4, 0, 6.283);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,180,210,0.7)';
+      ctx.beginPath();
+      ctx.arc(x + sp[0] - 1, y + sp[1] - 1.2, 1.1, 0, 6.283);
+      ctx.fill();
+    }
+  }
+}
+
+function drawPond(p, time){
+  const x = p.x, y = p.y;
+  ctx.save();
+
+  // dış toprak
+  ctx.fillStyle = '#4a3a24';
+  ctx.beginPath();
+  ctx.ellipse(x, y, p.rx + 9, p.ry + 7, 0, 0, 6.283);
+  ctx.fill();
+
+  // su
+  const g = ctx.createRadialGradient(x - p.rx*0.3, y - p.ry*0.3, 5, x, y, Math.max(p.rx, p.ry));
+  g.addColorStop(0, '#4aa8d8');
+  g.addColorStop(0.6, '#2a76a8');
+  g.addColorStop(1, '#1b5578');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(x, y, p.rx, p.ry, 0, 0, 6.283);
+  ctx.fill();
+
+  // dalgalar
+  ctx.strokeStyle = 'rgba(180,230,255,0.35)';
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 3; i++){
+    const t = time * 0.7 + p.ph + i * 1.4;
+    const ry = p.ry * (0.35 + i * 0.2);
+    ctx.beginPath();
+    ctx.ellipse(x + Math.sin(t) * 7, y + Math.sin(t*0.7 + i) * 4, p.rx * (0.4 + i*0.16), ry, 0, 0, 6.283);
+    ctx.stroke();
+  }
+
+  // parlama
+  ctx.fillStyle = 'rgba(255,255,255,0.16)';
+  ctx.beginPath();
+  ctx.ellipse(x - p.rx*0.35, y - p.ry*0.4, p.rx*0.3, p.ry*0.22, -0.4, 0, 6.283);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawPlayer(time){
+  const x = player.x, y = player.y;
+  const bob = player.moving ? Math.sin(player.step) * 2 : 0;
+  const py = y + bob;
+
+  // gölge
+  if (Q().shadow){
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 12, 13, 5.5, 0, 0, 6.283);
+    ctx.fill();
+  }
+
+  ctx.save();
+  ctx.translate(x, py);
+
+  // bacaklar
+  const legSwing = player.moving ? Math.sin(player.step) * 5 : 0;
+  ctx.strokeStyle = '#2f3a52';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-4, 6); ctx.lineTo(-4 + legSwing, 15);
+  ctx.moveTo(4, 6);  ctx.lineTo(4 - legSwing, 15);
+  ctx.stroke();
+
+  // gövde
+  ctx.fillStyle = player.flash > 0 ? '#ff9a9a' : '#4a6fa5';
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(-9, -8, 18, 18, 5) : ctx.rect(-9, -8, 18, 18);
+  ctx.fill();
+
+  // kollar
+  const armSwing = player.moving ? Math.sin(player.step + 3.14) * 5 : 0;
+  ctx.strokeStyle = '#c98d63';
+  ctx.lineWidth = 4.5;
+  ctx.beginPath();
+  ctx.moveTo(-8, -4); ctx.lineTo(-11 + armSwing, 4);
+  ctx.moveTo(8, -4);  ctx.lineTo(11 - armSwing, 4);
+  ctx.stroke();
+
+  // kafa
+  ctx.fillStyle = '#d9a175';
+  ctx.beginPath();
+  ctx.arc(0, -14, 9, 0, 6.283);
+  ctx.fill();
+
+  // saç
+  ctx.fillStyle = '#3a2a1c';
+  ctx.beginPath();
+  ctx.arc(0, -17, 9, Math.PI, 6.283);
+  ctx.fill();
+
+  // gözler
+  ctx.fillStyle = '#1a1a1a';
+  ctx.beginPath();
+  ctx.arc(-3.2, -14, 1.5, 0, 6.283);
+  ctx.arc(3.2, -14, 1.5, 0, 6.283);
+  ctx.fill();
+
+  ctx.restore();
+
+  // yön göstergesi / silah
+  const ax = x + Math.cos(player.dir) * 16;
+  const ay = py + Math.sin(player.dir) * 16;
+
+  if (player.hasSpear){
+    ctx.save();
+    ctx.translate(x, py);
+    ctx.rotate(player.dir);
+    const ext = player.attackAnim > 0 ? (1 - player.attackAnim) * 22 : 0;
+    ctx.strokeStyle = '#8b5a2b';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(6, 0);
+    ctx.lineTo(30 + ext, 0);
+    ctx.stroke();
+    ctx.fillStyle = '#c8ccd2';
+    ctx.beginPath();
+    ctx.moveTo(30 + ext, -4);
+    ctx.lineTo(42 + ext, 0);
+    ctx.lineTo(30 + ext, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  } else if (player.attackAnim > 0){
+    // yumruk efekti
+    ctx.save();
+    ctx.globalAlpha = player.attackAnim * 0.8;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x, py, 26 + (1 - player.attackAnim) * 16, player.dir - 0.7, player.dir + 0.7);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // toplama efekti
+  if (player.gatherAnim > 0){
+    ctx.save();
+    ctx.globalAlpha = player.gatherAnim * 0.7;
+    ctx.strokeStyle = '#9ee36a';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(ax, ay, 6 + (1 - player.gatherAnim) * 12, 0, 6.283);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawWolf(w, time){
+  const x = w.x, y = w.y;
+  const bob = Math.sin(time * 9 + w.wob) * 1.6;
+  const py = y + bob;
+
+  if (Q().shadow){
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 13, 15, 6, 0, 0, 6.283);
+    ctx.fill();
+  }
+
+  ctx.save();
+  ctx.translate(x, py);
+  ctx.rotate(w.dir + Math.PI/2);
+
+  const body = w.flash > 0 ? '#ff8a8a' : '#4a4a52';
+
+  // bacaklar
+  ctx.strokeStyle = '#333338';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  const ls = Math.sin(time * 14 + w.wob) * 4;
+  ctx.beginPath();
+  ctx.moveTo(-6, 4); ctx.lineTo(-7 + ls, 13);
+  ctx.moveTo(6, 4);  ctx.lineTo(7 - ls, 13);
+  ctx.stroke();
+
+  // gövde
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 11, 15, 0, 0, 6.283);
+  ctx.fill();
+
+  // kafa
+  ctx.beginPath();
+  ctx.ellipse(0, -16, 9, 8, 0, 0, 6.283);
+  ctx.fill();
+
+  // kulaklar
+  ctx.beginPath();
+  ctx.moveTo(-8, -20); ctx.lineTo(-5, -28); ctx.lineTo(-2, -20);
+  ctx.closePath();
+  ctx.moveTo(8, -20); ctx.lineTo(5, -28); ctx.lineTo(2, -20);
+  ctx.closePath();
+  ctx.fill();
+
+  // burun
+  ctx.fillStyle = '#222228';
+  ctx.beginPath();
+  ctx.ellipse(0, -24, 3.5, 2.8, 0, 0, 6.283);
+  ctx.fill();
+
+  // gözler
+  ctx.fillStyle = '#ff3b3b';
+  ctx.beginPath();
+  ctx.arc(-4, -18, 1.9, 0, 6.283);
+  ctx.arc(4, -18, 1.9, 0, 6.283);
+  ctx.fill();
+
+  ctx.restore();
+
+  // can barı
+  if (w.hp < w.maxHp){
+    const bw = 30;
+    const hpr = clamp(w.hp / w.maxHp, 0, 1);
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(x - bw/2 - 1, y - 34, bw + 2, 6);
+    ctx.fillStyle = hpr > 0.5 ? '#e74c3c' : '#ff8a3d';
+    ctx.fillRect(x - bw/2, y - 33, bw * hpr, 4);
+  }
+}
+
+function drawJoystick(){
+  if (!joy.active) return;
+  ctx.save();
+  ctx.globalAlpha = 0.42;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(joy.ox, joy.oy, MAXJOY, 0, 6.283);
+  ctx.stroke();
+
+  ctx.globalAlpha = 0.14;
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  ctx.globalAlpha = 0.65;
+  const g = ctx.createRadialGradient(joy.x, joy.y, 2, joy.x, joy.y, 26);
+  g.addColorStop(0, 'rgba(255,255,255,0.95)');
+  g.addColorStop(1, 'rgba(200,220,255,0.5)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(joy.x, joy.y, 26, 0, 6.283);
+  ctx.fill();
+  ctx.restore();
+}
+
+function render(time){
+  // zemin
+  ctx.fillStyle = '#2c421c';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+
+  let shakeX = 0, shakeY = 0;
+  if (shake > 0.2){
+    shakeX = rnd(-shake, shake);
+    shakeY = rnd(-shake, shake);
+  }
+  ctx.translate(-cam.x + shakeX, -cam.y + shakeY);
+
+  // zemin dokusu
+  if (groundPattern){
+    ctx.fillStyle = groundPattern;
+    ctx.fillRect(cam.x - 8, cam.y - 8, W + 16, H + 16);
+  }
+
+  const viewL = cam.x - 80, viewR = cam.x + W + 80;
+  const viewT = cam.y - 80, viewB = cam.y + H + 80;
+
+  // göletler
+  for (const p of ponds){
+    if (p.x + p.rx < viewL || p.x - p.rx > viewR) continue;
+    if (p.y + p.ry < viewT || p.y - p.ry > viewB) continue;
+    drawPond(p, time);
+  }
+
+  // derinlik sıralaması
+  const drawables = [];
+  for (const t of trees){
+    if (!t.alive) continue;
+    if (t.x < viewL || t.x > viewR || t.y < viewT || t.y > viewB) continue;
+    drawables.push({ y: t.y, kind: 'tree', o: t });
+  }
+  for (const r of rocks){
+    if (!r.alive) continue;
+    if (r.x < viewL || r.x > viewR || r.y < viewT || r.y > viewB) continue;
+    drawables.push({ y: r.y, kind: 'rock', o: r });
+  }
+  for (const b of bushes){
+    if (b.x < viewL || b.x > viewR || b.y < viewT || b.y > viewB) continue;
+    drawables.push({ y: b.y, kind: 'bush', o: b });
+  }
+  for (const w of wolves){
+    if (w.x < viewL || w.x > viewR || w.y < viewT || w.y > viewB) continue;
+    drawables.push({ y: w.y, kind: 'wolf', o: w });
+  }
+  drawables.push({ y: player.y, kind: 'player', o: player });
+
+  drawables.sort((a, b) => a.y - b.y);
+
+  for (const d of drawables){
+    if (d.kind === 'tree') drawTree(d.o, time);
+    else if (d.kind === 'rock') drawRock(d.o);
+    else if (d.kind === 'bush') drawBush(d.o, time);
+    else if (d.kind === 'wolf') drawWolf(d.o, time);
+    else if (d.kind === 'player') drawPlayer(time);
+  }
+
+  // parçacıklar
+  for (const p of particles){
+    const a = clamp(p.life / p.maxLife, 0, 1);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * a, 0, 6.283);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.restore();
+
+  // gece / karanlık
+  if (darkness > 0.01){
+    const cx = player.x - cam.x + shakeX;
+    const cy = player.y - cam.y + shakeY;
+    const lr = Q().lightR;
+    const g = ctx.createRadialGradient(cx, cy, 14, cx, cy, lr);
+    g.addColorStop(0, 'rgba(4,6,22,0)');
+    g.addColorStop(0.55, `rgba(4,6,22,${darkness * 0.35})`);
+    g.addColorStop(1, `rgba(4,6,22,${darkness})`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // gündüz sıcak ton
+  if (darkness < 0.15){
+    const warm = (0.15 - darkness) / 0.15;
+    ctx.fillStyle = `rgba(255,190,90,${warm * 0.05})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // vinyet
+  const vg = ctx.createRadialGradient(W/2, H/2, Math.min(W,H)*0.42, W/2, H/2, Math.max(W,H)*0.78);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,0.42)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, W, H);
+
+  // düşük can uyarısı
+  if (player.hp < 30 && gameState === 'playing'){
+    const pulse = (Math.sin(time * 5) * 0.5 + 0.5) * 0.22 * (1 - player.hp / 30);
+    ctx.fillStyle = `rgba(180,0,0,${pulse})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // joystick
+  drawJoystick();
+
+  // kenar çizgileri (dünya dışı)
+  if (cam.x <= 0){
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(0, 0, Math.max(0, -cam.x), H);
+  }
+}
+
+/* ===================== HUD ===================== */
+const els = {
+  hp: document.querySelector('#hpBar > i'),
+  hunger: document.querySelector('#hungerBar > i'),
+  thirst: document.querySelector('#thirstBar > i'),
+  stam: document.querySelector('#stamBar > i'),
+  wood: document.getElementById('cWood'),
+  stone: document.getElementById('cStone'),
+  berry: document.getElementById('cBerry'),
+  meat: document.getElementById('cMeat')
+};
+
+let hudTimer = 0;
+function updateHUD(){
+  els.hp.style.width = clamp(player.hp / player.maxHp * 100, 0, 100) + '%';
+  els.hunger.style.width = clamp(player.hunger, 0, 100) + '%';
+  els.thirst.style.width = clamp(player.thirst, 0, 100) + '%';
+  els.stam.style.width = clamp(player.stam, 0, 100) + '%';
+  els.wood.textContent = inv.wood;
+  els.stone.textContent = inv.stone;
+  els.berry.textContent = inv.berry;
+  els.meat.textContent = inv.meat;
+
+  // mızrak yapılabiliyorsa ipucu
+  if (!player.hasSpear && inv.wood >= 3 && inv.stone >= 2){
+    // otomatik yap
+    inv.wood -= 3;
+    inv.stone -= 2;
+    player.hasSpear = true;
+    player.damage = 42;
+    showMsg('🗡️ Mızrak yaptın! Hasar arttı', 2.4);
+  }
+}
+
+/* ===================== OYUN DÖNGÜSÜ ===================== */
+function loop(now){
+  requestAnimationFrame(loop);
+
+  if (!lastTime) lastTime = now;
+  let dt = (now - lastTime) / 1000;
+  lastTime = now;
+  if (dt > 0.08) dt = 0.08;
+  if (dt <= 0) return;
+
+  if (gameState === 'playing'){
+    elapsed += dt;
+
+    updateTimeOfDay(dt);
+    updatePlayer(dt);
+    updateWolves(dt);
+    updateResources(dt);
+    updateParticles(dt);
+    updateCamera(dt);
+
+    if (shake > 0) shake = Math.max(0, shake - dt * 24);
+
+    hudTimer -= dt;
+    if (hudTimer <= 0){ updateHUD(); hudTimer = 0.08; }
+
+    if (msgTimer > 0){
+      msgTimer -= dt;
+      if (msgTimer <= 0) document.getElementById('msg').classList.remove('show');
+    }
+  }
+
+  render(elapsed);
+}
+
+/* ===================== OYUN KONTROL ===================== */
+function startGame(){
+  player.x = WORLD/2;
+  player.y = WORLD/2;
+  player.hp = 100;
+  player.hunger = 100;
+  player.thirst = 100;
+  player.stam = 100;
+  player.dir = -Math.PI/2;
+  player.attackCd = 0;
+  player.attackAnim = 0;
+  player.gatherAnim = 0;
+  player.damage = 24;
+  player.hasSpear = false;
+  player.flash = 0;
+  player.step = 0;
+
+  inv.wood = 0; inv.stone = 0; inv.berry = 0; inv.meat = 0;
+
+  gameTime = 0;
+  darkness = 0;
+  wolfSpawnTimer = 4;
+  shake = 0;
+  elapsed = 0;
+  particles = [];
+  holding.gather = false;
+  holding.attack = false;
+  document.querySelectorAll('.btn').forEach(b => b.classList.remove('on'));
+
+  generateWorld();
+  updateCamera(1);
+  cam.x = clamp(player.x - W/2, 0, Math.max(0, WORLD - W));
+  cam.y = clamp(player.y - H/2, 0, Math.max(0, WORLD - H));
+
+  updateHUD();
+
+  document.getElementById('menu').classList.add('hidden');
+  document.getElementById('settingsPanel').classList.add('hidden');
+  document.getElementById('pausePanel').classList.add('hidden');
+  document.getElementById('gameOver').classList.add('hidden');
+
+  gameState = 'playing';
+  lastTime = 0;
+
+  setTimeout(() => showMsg('🪵 Ağaçlara, 🪨 kayalara yaklaş ve TOPLA', 3.2), 400);
+}
+
+function endGame(){
+  gameState = 'over';
+  const el = document.getElementById('gameOver');
+  document.getElementById('goStats').innerHTML =
+    `Hayatta kaldığın süre: <b style="color:#ffd97a">${Math.floor(elapsed)} saniye</b><br>` +
+    `Toplanan: 🪵 ${inv.wood} · 🪨 ${inv.stone} · 🫐 ${inv.berry} · 🍖 ${inv.meat}`;
+  el.classList.remove('hidden');
+}
+
+function pauseGame(){
+  if (gameState !== 'playing') return;
+  gameState = 'paused';
+  document.getElementById('pausePanel').classList.remove('hidden');
+}
+
+function resumeGame(){
+  if (gameState !== 'paused') return;
+  document.getElementById('pausePanel').classList.add('hidden');
+  document.getElementById('settingsPanel').classList.add('hidden');
+  gameState = 'playing';
+  lastTime = 0;
+}
+
+function goMenu(){
+  gameState = 'menu';
+  document.getElementById('pausePanel').classList.add('hidden');
+  document.getElementById('gameOver').classList.add('hidden');
+  document.getElementById('settingsPanel').classList.add('hidden');
+  document.getElementById('menu').classList.remove('hidden');
+}
+
+/* ===================== UI OLAYLARI ===================== */
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('retryBtn').addEventListener('click', startGame);
+document.getElementById('menuBtn').addEventListener('click', goMenu);
+document.getElementById('quitBtn').addEventListener('click', goMenu);
+document.getElementById('resumeBtn').addEventListener('click', resumeGame);
+document.getElementById('pauseBtn').addEventListener('click', () => {
+  if (gameState === 'playing') pauseGame();
+  else if (gameState === 'paused') resumeGame();
+});
+
+document.getElementById('settingsBtn').addEventListener('click', () => {
+  document.getElementById('menu').classList.add('hidden');
+  document.getElementById('settingsPanel').classList.remove('hidden');
+});
+document.getElementById('pauseSettings').addEventListener('click', () => {
+  document.getElementById('pausePanel').classList.add('hidden');
+  document.getElementById('settingsPanel').classList.remove('hidden');
+});
+document.getElementById('closeSettings').addEventListener('click', () => {
+  document.getElementById('settingsPanel').classList.add('hidden');
+  if (gameState === 'menu') document.getElementById('menu').classList.remove('hidden');
+  else if (gameState === 'paused') document.getElementById('pausePanel').classList.remove('hidden');
+});
+
+// Kalite
+document.querySelectorAll('#qualitySeg button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#qualitySeg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    settings.quality = b.dataset.q;
+    buildGround();
+  });
+});
+// Parçacık
+document.querySelectorAll('#partSeg button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#partSeg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    settings.particles = b.dataset.p === '1';
+  });
+});
+// Gün uzunluğu
+document.querySelectorAll('#daySeg button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#daySeg button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    settings.dayLength = parseInt(b.dataset.d, 10);
+  });
+});
+
+// Varsayılan aktif butonlar
+document.querySelector('#qualitySeg button[data-q="orta"]').classList.add('active');
+document.querySelector('#partSeg button[data-p="1"]').classList.add('active');
+document.querySelector('#daySeg button[data-d="180"]').classList.add('active');
+
+/* ===================== BAŞLAT ===================== */
+buildGround();
+generateWorld();
+updateCamera(1);
+cam.x = clamp(player.x - W/2, 0, Math.max(0, WORLD - W));
+cam.y = clamp(player.y - H/2, 0, Math.max(0, WORLD - H));
+updateHUD();
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
+// Tam ekran başlat (BAŞLA butonuna basınca)
+document.getElementById('startBtn').addEventListener('click', function(){
+  var el = document.documentElement;
+  var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  if (rfs) {
+    rfs.call(el).catch(function(){});
+  }
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(function(){});
+  }
+});
