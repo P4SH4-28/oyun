@@ -1,0 +1,25 @@
+{
+  "name": "Hayatta Kal",
+  "short_name": "Hayatta Kal",
+  "description": "Vahşi doğada hayatta kalma oyunu",
+  "start_url": "./oyun.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjgwIiBmaWxsPSIjMGQxYTBkIi8+PGNpcmNsZSBjeD0iMjU2IiBjeT0iMjU2IiByPSIxODAiIGZpbGw9IiMzZDVjMmIiLz48cGF0aCBkPSJNMjU2IDkwIEwzMjAgMjMwIEwxOTIgMjMwIFoiIGZpbGw9IiM0YTZmYTUiLz48Y2lyY2xlIGN4PSIyNTYiIGN5PSIxNjAiIHI9IjQwIiBmaWxsPSIjZDlhMTc1Ii8+PHBhdGggZD0iTTI1NiAxOTAgTDI1NiAzMDAgTTIyMCAyNDAgTDI5MiAyNDAiIHN0cm9rZT0iIzhjNWMyYiIgc3Ryb2tlLXdpZHRoPSIxNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjMwIiBmaWxsPSIjMGQxYTBkIi8+PGNpcmNsZSBjeD0iOTYiIGN5PSI5NiIgcj0iNjgiIGZpbGw9IiMzZDVjMmIiLz48cGF0aCBkPSJNOTYgMzQgTDEyMCA4NiBMNzIgODYgWiIgZmlsbD0iIzRhNmZhNSIvPjxjaXJjbGUgY3g9Ijk2IiBjeT0iNjAiIHI9IjE1IiBmaWxsPSIjZDlhMTc1Ii8+PC9zdmc+",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
