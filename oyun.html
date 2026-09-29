@@ -1556,16 +1556,12 @@ requestAnimationFrame(loop);
 
 })();
 </script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+</script>
 </body>
 </html>
-// Tam ekran başlat (BAŞLA butonuna basınca)
-document.getElementById('startBtn').addEventListener('click', function(){
-  var el = document.documentElement;
-  var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-  if (rfs) {
-    rfs.call(el).catch(function(){});
-  }
-  if (screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock('landscape').catch(function(){});
-  }
-});
