@@ -2,7 +2,7 @@
   "name": "Hayatta Kal",
   "short_name": "Hayatta Kal",
   "description": "Vahşi doğada hayatta kalma oyunu",
-  "start_url": "./oyun.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",
   "orientation": "landscape",
